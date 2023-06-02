@@ -1,6 +1,6 @@
 # Service Now CMDB Connector Reference
 
-The [Elastic Service Now CMDB connector](../connectors/sources/sncmdb.py) is provided in the Elastic connectors python framework and can be used via [build a connector](https://www.elastic.co/guide/en/enterprise-search/current/build-connector.html).
+The [Elastic Service Now CMDB connector](../../connectors/sources/sncmdb.py) is provided in the Elastic connectors python framework and can be used via [build a connector](https://www.elastic.co/guide/en/enterprise-search/current/build-connector.html).
 
 To build and run the docker image:
 
