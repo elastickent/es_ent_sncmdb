@@ -4,7 +4,7 @@ The [Elastic Service Now CMDB connector](../connectors/sources/sncmdb.py) is pro
 
 To build docker image:
 
-1. Clone this project and Create a [new connector in Kibana] (https://www.elastic.co/guide/en/enterprise-search/current/build-connector.html)
+1. Clone this project and Create a [new connector in Kibana](https://www.elastic.co/guide/en/enterprise-search/current/build-connector.html)
 2. `cd` into the project directory
 3. [Create a Python virtual environment](https://docs.python.org/3/library/venv.html)
 4. Edit config.yml and add connector id and es details
