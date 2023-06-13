@@ -54,6 +54,8 @@ class ESClient:
                 ca_certs = config["ca_certs"]
                 logger.debug(f"Verifying cert with {ca_certs}")
                 options["ca_certs"] = ca_certs
+        else:
+            options["verify_certs"] = False
 
         level = config.get("log_level", "INFO").upper()
         es_logger = logging.getLogger("elastic_transport.node")
