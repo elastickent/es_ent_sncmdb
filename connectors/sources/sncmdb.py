@@ -52,10 +52,10 @@ class SncmdbDataSource(BaseDataSource):
                 "type": "list",
             }
         }
-    
+
     async def ping(self):
         cfg = self.configuration
-        url = 'https://%s/api/now/table/%s' % (cfg["domain"], 
+        url = 'https://%s/api/now/table/%s' % (cfg["domain"],
                                                cfg["sn_items"][0])
         try:
             resp = requests.get(url, params=sn_params,
@@ -71,7 +71,7 @@ class SncmdbDataSource(BaseDataSource):
     def _clean_empty(self, data):
         if data is None:
             return None
-        res_data = [{item: value for item, value in row.items() if value} 
+        res_data = [{item: value for item, value in row.items() if value}
                     for row in data]
         return res_data
 
@@ -81,6 +81,7 @@ class SncmdbDataSource(BaseDataSource):
         sysparm_limit = 1000
         while True:
             for sn_table in cfg['sn_items']:
+                logger.info("Parsing table:", sn_table)
                 sn_params = {
                     'sysparm_limit': sysparm_limit,
                     'sysparm_offset': sysparm_offset,
@@ -88,29 +89,34 @@ class SncmdbDataSource(BaseDataSource):
                     'sysparm_exclude_reference_link': 'true',
                 }
                 url = f'https://{cfg["domain"]}/api/now/table/{sn_table}'
-                resp = requests.get(url, params=sn_params, auth=(cfg["user"], 
-                                    cfg["password"]), headers=sn_headers, 
+                resp = requests.get(url, params=sn_params, auth=(cfg["user"],
+                                    cfg["password"]), headers=sn_headers,
                                     stream=True)
-                
+
                 if resp.status_code != 200:
-                    logger.warning('Status:', resp.status_code, 'Headers:', 
-                                   resp.headers, 'Error Response:', 
+                    logger.warning('Status:', resp.status_code, 'Headers:',
+                                   resp.headers, 'Error Response:',
                                    resp.json())
                     raise NotImplementedError
-            
+
                 data = resp.json()
-                
+
                 if data is not None:
                     table = self._clean_empty(data['result'])
                     for row in table:
-                        row['_id'] = row['sys_id']
-                        row['@timestamp'] = row['sys_updated_on']
-                        lazy_download = None
-                        doc = row, lazy_download
-                        yield doc
-            
+                        try:
+                            row['_id'] = row['sys_id']
+                            if "sys_updated_on" not in row:
+                                logger.debug("sys_updated_on missing from:", row)
+                            row['@timestamp'] = row['sys_updated_on']
+                            lazy_download = None
+                            doc = row, lazy_download
+                            yield doc
+                        except Exception as err:
+                            logger.error("Error processing:", row, "Exception:", err)
+                            # raise
+
             # Update the offset for the next page
             sysparm_offset += sysparm_limit
             if len(data['result']) < sysparm_limit:
                 break
-
