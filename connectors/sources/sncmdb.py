@@ -81,7 +81,7 @@ class SncmdbDataSource(BaseDataSource):
         sysparm_limit = 1000
         while True:
             for sn_table in cfg['sn_items']:
-                logger.info("Parsing table:", sn_table)
+                logger.info(f"Parsing table: {sn_table}")
                 sn_params = {
                     'sysparm_limit': sysparm_limit,
                     'sysparm_offset': sysparm_offset,
@@ -94,9 +94,7 @@ class SncmdbDataSource(BaseDataSource):
                                     stream=True)
 
                 if resp.status_code != 200:
-                    logger.warning('Status:', resp.status_code, 'Headers:',
-                                   resp.headers, 'Error Response:',
-                                   resp.json())
+                    logger.warning(f"Status: {resp.status_code} Headers: {resp.headers} Error Response: {resp.json()}")
                     raise NotImplementedError
 
                 data = resp.json()
