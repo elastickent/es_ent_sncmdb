@@ -104,15 +104,12 @@ class SncmdbDataSource(BaseDataSource):
                     for row in table:
                         try:
                             row['_id'] = row['sys_id']
-                            if "sys_updated_on" not in row:
-                                logger.debug("sys_updated_on missing from:", row)
-                            row['@timestamp'] = row['sys_updated_on']
+                            row['url.domain'] = cfg["domain"]
                             lazy_download = None
                             doc = row, lazy_download
                             yield doc
                         except Exception as err:
-                            logger.error("Error processing:", row, "Exception:", err)
-                            # raise
+                            logger.error(f"Error processing: {row} Exception: {err}")
 
             # Update the offset for the next page
             sysparm_offset += sysparm_limit
