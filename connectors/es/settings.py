@@ -10,7 +10,8 @@ import yaml
 
 ENUM_IGNORE_ABOVE = 2048
 
-DATE_FIELD_MAPPING = {"type": "date"}
+DATE_FIELD_MAPPING = {"type": "date",
+                      "format": "date_optional_time||strict_date_optional_time||yyyy-MM-dd'T'HH:mm:ss||yyyy-MM-dd HH:mm:ss||yyyy-MM-dd HH:mm:ss a||yyyy-MM-dd HH:mm:ss||M/dd/yyyy HH:mm:ss a||MM/dd/yyyy HH:mm:ss||MM/dd/yyyy HH:mm:ss a||yyyy-MM-dd||epoch_millis"}
 
 KEYWORD_FIELD_MAPPING = {"type": "keyword"}
 
@@ -44,6 +45,13 @@ TEXT_FIELD_MAPPING = {
 WORKPLACE_SEARCH_SUBEXTRACTION_STAMP_FIELD_MAPPINGS = {
     "_subextracted_as_of": DATE_FIELD_MAPPING,
     "_subextracted_version": KEYWORD_FIELD_MAPPING,
+}
+
+SNCMDB_FIELD_MAPPINGS = {
+    "sys_updated_on": DATE_FIELD_MAPPING,
+    "assigned": DATE_FIELD_MAPPING,
+    "sys_created_on": DATE_FIELD_MAPPING,
+    "install_date": DATE_FIELD_MAPPING,
 }
 
 CRAWLER_FIELD_MAPPINGS = {
@@ -144,6 +152,7 @@ class Mappings:
             result["properties"].update(
                 WORKPLACE_SEARCH_SUBEXTRACTION_STAMP_FIELD_MAPPINGS
             )
+            result["properties"].update(SNCMDB_FIELD_MAPPINGS)
         return result
 
 

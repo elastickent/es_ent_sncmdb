@@ -19,27 +19,11 @@ from dateutil.relativedelta import relativedelta
 
 sn_headers = {"Accept": "application/json"}
 
-sn_params = {'sysparm_limit': '10000',
-             'sysparm_display_value': 'true',
-             'sysparm_exclude_reference_link': 'true', }
-
-
 class SncmdbDataSource(BaseDataSource):
     """ServiceNow CMDB Connector"""
 
     def __init__(self, configuration):
         super().__init__(configuration=configuration)
-
-    def _one_year_ago():
-        # Takes in account leap years
-        one_year_ago_date = datetime.now() - relativedelta(years=1)
-        return one_year_ago_date.strftime('%Y-%m-%d %H:%M:%S')
-    
-    def _validate_date(date_string):
-        try:
-            datetime.strptime(date_string, '%Y-%m-%d %H:%M:%S')
-        except ValueError:
-            raise ValueError("Incorrect data format, should be YYYY-MM-DD HH:MM:SS")
 
     @classmethod
     def get_default_configuration(cls):
@@ -63,17 +47,16 @@ class SncmdbDataSource(BaseDataSource):
                 "label": "Password",
                 "type": "str",
                 "sensitive": True,
-                "value": ""
+                "value": "vxOx5RkXL5@$"
             },
             "sn_items": {
                 "order": 4,
-                "value": "cmdb_ci_hpux_server",
+                "value": "cmdb_ci_linux_server",
                 "label": "Comma separated list of ServiceNow tables",
                 "type": "list"
             },
              "start_date": {
                 "order": 5,
-                "default_value": def_start_date,
                 "value": def_start_date,
                 "label": "Start Date (defaults to 1 year ago)",
                 "tooltip": "format: YYYY-MM-DD HH:MM:SS, e.g. 2023-06-21 15:45:30",
@@ -86,6 +69,9 @@ class SncmdbDataSource(BaseDataSource):
         cfg = self.configuration
         url = 'https://%s/api/now/table/%s' % (cfg["domain"],
                                                cfg["sn_items"][0])
+        sn_params = {'sysparm_limit': '1',
+             'sysparm_display_value': 'true',
+             'sysparm_exclude_reference_link': 'true', }
         try:
             resp = requests.get(url, params=sn_params,
                                 auth=(cfg["user"], cfg["password"]),
@@ -111,9 +97,9 @@ class SncmdbDataSource(BaseDataSource):
         cfg = self.configuration
         sysparm_offset = 0
         sysparm_limit = 1000
-        # Read the latest sys_updated_on value if its set from the last sync.
-        state_file = './last_sys_update_on'
+        # Read the latest sys_updated_on value if it was cached from the last sync.
         running_sys_updated_on = ""
+        state_file = './last_sys_update_on'
         if os.path.isfile(state_file):
             with open(state_file, 'r') as file:
                 max_sys_updated_on = file.read().strip()
@@ -130,7 +116,7 @@ class SncmdbDataSource(BaseDataSource):
                     'sysparm_exclude_reference_link': 'true',
                     'sysparm_query': 'sys_updated_on>=' + max_sys_updated_on + '^ORDERBYsys_updated_on'
                 }
-                print(sn_params)
+                logger.debug(f'service_now request:{sn_params}')
                 url = f'https://{cfg["domain"]}/api/now/table/{sn_table}'
                 resp = requests.get(url, params=sn_params, auth=(cfg["user"],
                                     cfg["password"]), headers=sn_headers,
@@ -150,6 +136,7 @@ class SncmdbDataSource(BaseDataSource):
                             row['url.domain'] = cfg["domain"]
                             lazy_download = None
                             doc = row, lazy_download
+                            # Track the latest sys_updated_on value for caching
                             this_sys_update_ts = self._string_to_datetime(row['sys_updated_on'])
                             max_sys_updated_on_ts = self._string_to_datetime(max_sys_updated_on)
                             if this_sys_update_ts > max_sys_updated_on_ts:
