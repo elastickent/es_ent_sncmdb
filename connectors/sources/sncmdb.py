@@ -27,8 +27,10 @@ class SncmdbDataSource(BaseDataSource):
 
     @classmethod
     def get_default_configuration(cls):
+        # Calculate the date one year ago today.
         one_year_ago_date = datetime.now() - relativedelta(years=1)
         def_start_date = one_year_ago_date.strftime('%Y-%m-%d %H:%M:%S')
+        # Default configuration UI fields rendered in Kibana.
         return {
             "domain": {
                 "order": 1,
@@ -47,7 +49,7 @@ class SncmdbDataSource(BaseDataSource):
                 "label": "Password",
                 "type": "str",
                 "sensitive": True,
-                "value": "vxOx5RkXL5@$"
+                "value": "Censored"
             },
             "sn_items": {
                 "order": 4,
@@ -82,7 +84,8 @@ class SncmdbDataSource(BaseDataSource):
             logger.exception("Error while connecting to the ServiceNow.")
             raise NotImplementedError
         return True
-
+    
+    # Helper functions.
     def _clean_empty(self, data):
         if data is None:
             return None
@@ -107,6 +110,7 @@ class SncmdbDataSource(BaseDataSource):
         with open(state_file, 'w') as file:
             file.write(running_sys_updated_on.strftime('%Y-%m-%d %H:%M:%S'))
 
+    # Main run loop.=
     async def get_docs(self, filtering=None):
         cfg = self.configuration
         sysparm_offset = 0
