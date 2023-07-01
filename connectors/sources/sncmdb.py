@@ -92,6 +92,20 @@ class SncmdbDataSource(BaseDataSource):
 
     def _string_to_datetime(self, date_string):
         return datetime.strptime(date_string, '%Y-%m-%d %H:%M:%S')
+    
+    def _check_cache(self, sn_table):
+        state_file = f'.sncmd-{sn_table}.cache'
+        if os.path.isfile(state_file):
+            with open(state_file, 'r') as file:
+                max_sys_updated_on = file.read().strip()
+                return max_sys_updated_on
+        else:
+            return False
+        
+    def _write_cache(self, sn_table, running_sys_updated_on):
+        state_file = f'.sncmd-{sn_table}.cache'
+        with open(state_file, 'w') as file:
+            file.write(running_sys_updated_on.strftime('%Y-%m-%d %H:%M:%S'))
 
     async def get_docs(self, filtering=None):
         cfg = self.configuration
@@ -99,35 +113,30 @@ class SncmdbDataSource(BaseDataSource):
         sysparm_limit = 1000
         # Read the latest sys_updated_on value if it was cached from the last sync.
         running_sys_updated_on = ""
-        state_file = './last_sys_update_on'
-        if os.path.isfile(state_file):
-            with open(state_file, 'r') as file:
-                max_sys_updated_on = file.read().strip()
-                logger.info(f'found state file:{state_file} with date {max_sys_updated_on}')
-        else:
-            max_sys_updated_on = cfg['start_date']
         while True:
             for sn_table in cfg['sn_items']:
                 logger.info(f"Parsing table: {sn_table}")
+                max_sys_updated_on = self._check_cache(sn_table)
+                if max_sys_updated_on:
+                    logger.info(f'found state with date {max_sys_updated_on}')
+                else:
+                    max_sys_updated_on = cfg['start_date']
                 sn_params = {
                     'sysparm_limit': sysparm_limit,
                     'sysparm_offset': sysparm_offset,
                     'sysparm_display_value': 'true',
                     'sysparm_exclude_reference_link': 'true',
-                    'sysparm_query': 'sys_updated_on>=' + max_sys_updated_on + '^ORDERBYsys_updated_on'
+                    'sysparm_query': 'sys_updated_on>' + max_sys_updated_on + '^ORDERBYsys_updated_on'
                 }
                 logger.debug(f'service_now request:{sn_params}')
                 url = f'https://{cfg["domain"]}/api/now/table/{sn_table}'
                 resp = requests.get(url, params=sn_params, auth=(cfg["user"],
                                     cfg["password"]), headers=sn_headers,
                                     stream=True)
-
                 if resp.status_code != 200:
                     logger.warning(f"Status: {resp.status_code} Headers: {resp.headers} Error Response: {resp.json()}")
                     raise NotImplementedError
-
                 data = resp.json()
-
                 if data is not None:
                     table = self._clean_empty(data['result'])
                     for row in table:
@@ -150,6 +159,5 @@ class SncmdbDataSource(BaseDataSource):
             if len(data['result']) < sysparm_limit:
                 # Sync is finished, save the latest sys_updated_on value for the next sync.
                 if not running_sys_updated_on == "":
-                    with open(state_file, 'w') as file:
-                        file.write(running_sys_updated_on.strftime('%Y-%m-%d %H:%M:%S'))
+                    self._write_cache( sn_table, running_sys_updated_on)
                 break
