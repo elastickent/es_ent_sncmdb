@@ -27,7 +27,7 @@ class SncmdbDataSource(BaseDataSource):
 
     @classmethod
     def get_default_configuration(cls):
-        # Calculate the date one year ago today.
+        # Calculate the default date of one year ago today.
         one_year_ago_date = datetime.now() - relativedelta(years=1)
         def_start_date = one_year_ago_date.strftime('%Y-%m-%d %H:%M:%S')
         # Default configuration UI fields rendered in Kibana.
@@ -80,6 +80,7 @@ class SncmdbDataSource(BaseDataSource):
                                 headers=sn_headers, stream=True)
         except Exception:
             logger.exception("Error while connecting to the ServiceNow.")
+            return False
         if resp.status_code != 200:
             logger.exception("Error while connecting to the ServiceNow.")
             raise NotImplementedError
