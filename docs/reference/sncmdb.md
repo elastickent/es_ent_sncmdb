@@ -18,3 +18,26 @@ A Service Now account with API access to the CMDB tables that will be ingested.
 
 
 For additional operations, see [Usage](https://www.elastic.co/guide/en/enterprise-search/master/connectors-usage.html).
+
+
+## To update the scheduled interval to every 5 minutes
+
+We'll need to override the configuration stored in elasticsearch.
+
+1. First schedule the job for every hour in Kibana.
+
+1. Find the _id of connector configuration stored in '.elastic-connectors-v1' 
+    by creating a data view in Kibana's Discover tab. 
+
+3. Then using the _id, update the scheduling.interval field
+
+```
+curl -X POST "localhost:9200/.elastic-connectors-v1/_update/jr4uMIkBbXrbv2Y_DDc9" -H 'Content-Type: application/json' -d'
+{
+  "doc": {
+    "scheduling": {
+      "interval": "0 0/5 * * * ?"
+    }
+  }
+}'
+```
