@@ -24,12 +24,14 @@ For additional operations, see [Usage](https://www.elastic.co/guide/en/enterpris
 
 We'll need to override the configuration stored in elasticsearch.
 
-1. First schedule the job for every hour in Kibana.
+1. Start the sync job for manually in Kibana. Wait for it to complete.
+   
+2. Schedule the job for every hour in Kibana.
 
-1. Find the _id of connector configuration stored in '.elastic-connectors-v1' 
+3. Find the _id of connector configuration stored in '.elastic-connectors-v1' 
     by creating a data view in Kibana's Discover tab. 
 
-3. Then using the _id, update the scheduling.interval field
+4. Then using the _id, update the scheduling.interval field
 
 ```
 curl -X POST "localhost:9200/.elastic-connectors-v1/_update/jr4uMIkBbXrbv2Y_DDc9" -H 'Content-Type: application/json' -d'
