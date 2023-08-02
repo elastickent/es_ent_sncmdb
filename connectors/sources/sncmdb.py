@@ -49,7 +49,7 @@ class SncmdbDataSource(BaseDataSource):
                 "label": "Password",
                 "type": "str",
                 "sensitive": True,
-                "value": "Censored"
+                "value": ""
             },
             "sn_items": {
                 "order": 4,
@@ -64,6 +64,14 @@ class SncmdbDataSource(BaseDataSource):
                 "tooltip": "format: YYYY-MM-DD HH:MM:SS, e.g. 2023-06-21 15:45:30",
                 "type": "str",
                 "required": False
+            },
+            "delete_cached": {
+                "order": 6,
+                "display": "toggle",
+                "value": False,
+                "label": "Delete cache, RESET to false after first sync",
+                "tooltip": "When resetting the start time to a later date, set this flag. Sync manually the reset to false for scheduled syncs",
+                "type": "bool"
             }
         }
 
@@ -106,26 +114,40 @@ class SncmdbDataSource(BaseDataSource):
         else:
             return False
         
+    def _delete_cache(self, sn_table):
+        state_file = f'.sncmd-{sn_table}.cache'
+        if os.path.isfile(state_file):
+            os.remove(state_file)
+            logger.info(f"deleting cache file:{state_file}")
+        else:
+            return False
+        
     def _write_cache(self, sn_table, running_sys_updated_on):
         state_file = f'.sncmd-{sn_table}.cache'
         with open(state_file, 'w') as file:
             file.write(running_sys_updated_on.strftime('%Y-%m-%d %H:%M:%S'))
+            logger.info(f"writing cache file:{state_file}")
 
     # Main run loop.=
     async def get_docs(self, filtering=None):
         cfg = self.configuration
         sysparm_offset = 0
         sysparm_limit = 1000
-        # Read the latest sys_updated_on value if it was cached from the last sync.
         running_sys_updated_on = ""
         while True:
             for sn_table in cfg['sn_items']:
-                logger.info(f"Parsing table: {sn_table}")
-                max_sys_updated_on = self._check_cache(sn_table)
-                if max_sys_updated_on:
-                    logger.info(f'found state with date {max_sys_updated_on}')
-                else:
+                logger.info(f"parsing table: {sn_table}")
+                if cfg['delete_cached']:
+                    self._delete_cache(sn_table)
                     max_sys_updated_on = cfg['start_date']
+                else:
+                    # Read the latest sys_updated_on value if it was cached from the last sync.
+                    max_sys_updated_on = self._check_cache(sn_table)
+                    if max_sys_updated_on:
+                        logger.info(f'found state with date {max_sys_updated_on}')
+                    else:
+                        max_sys_updated_on = cfg['start_date']
+
                 sn_params = {
                     'sysparm_limit': sysparm_limit,
                     'sysparm_offset': sysparm_offset,
@@ -141,6 +163,7 @@ class SncmdbDataSource(BaseDataSource):
                 if resp.status_code != 200:
                     logger.warning(f"Status: {resp.status_code} Headers: {resp.headers} Error Response: {resp.json()}")
                     raise NotImplementedError
+                # print(resp.text)
                 data = resp.json()
                 if data is not None:
                     table = self._clean_empty(data['result'])
@@ -164,5 +187,5 @@ class SncmdbDataSource(BaseDataSource):
             if len(data['result']) < sysparm_limit:
                 # Sync is finished, save the latest sys_updated_on value for the next sync.
                 if not running_sys_updated_on == "":
-                    self._write_cache( sn_table, running_sys_updated_on)
+                    self._write_cache(sn_table, running_sys_updated_on)
                 break
