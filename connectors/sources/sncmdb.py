@@ -70,7 +70,7 @@ class SncmdbDataSource(BaseDataSource):
                 "display": "toggle",
                 "value": False,
                 "label": "Delete cache, RESET to false after first sync",
-                "tooltip": "When resetting the start time to a later date, set this flag. Sync manually the reset to false for scheduled syncs",
+                "tooltip": "When resetting the start time to a later date, set this flag. Sync manually then reset to false for scheduled syncs",
                 "type": "bool"
             }
         }
