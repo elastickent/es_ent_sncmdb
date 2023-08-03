@@ -43,3 +43,20 @@ curl -X POST "localhost:9200/.elastic-connectors-v1/_update/jr4uMIkBbXrbv2Y_DDc9
   }
 }'
 ```
+
+## Adding a seperate instance of the connector.
+
+1. Add a custom connector in Kibana
+2. Add an additional stanza in the config.yml:
+   ```
+   service_type: sncmdb
+connector_id: "P9DmtYkBHhJgWpt5Wi5I"
+
+service_type: sncmdb
+connector_id: "0xsUu4kBHhJgWpt5F2dC"
+
+# service_type: sncmdb
+# connector_id:  "qFi8EYkBbXrbv2Y_zP7-"
+   ```
+3. Restart elastic-ingest
+4. Finish configuration in Kibana
